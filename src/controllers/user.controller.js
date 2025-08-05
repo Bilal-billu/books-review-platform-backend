@@ -2,6 +2,7 @@ import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js"
+import jwt from "jsonwebtoken"
 
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -19,6 +20,7 @@ const generateAccessAndRefreshToken = async (userId) => {
     catch(e)
     {
         console.log("Error generating tokens.")
+        console.log(e)
         throw new ApiError(500, "Error generating tokens.")
     }
 }
@@ -157,9 +159,60 @@ const logoutUser = asyncHandler(async (req, res) => {
     )
 })
 
+const regenerateAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+    try
+    {
+        if(!incomingRefreshToken)
+        {
+            throw({
+                message: "No token found for user."
+            })
+        }
+        const decodedRefreshToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const user = await User.findById(decodedRefreshToken._id);
+        if(!user)
+        {
+            throw({
+                // code: 404,
+                message: "User not found.",
+            })
+        }
+        // console.log("incoming", incomingRefreshToken);
+        // console.log("user", user.refreshToken);
+        
+        if(incomingRefreshToken !== user.refreshToken)
+        {
+            throw({
+                message: "Unmatched auth."
+            })
+        }
+        const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
+        return res.status(200)
+        .cookie("accessToken", accessToken, cookieOptionsSecure)
+        .cookie("refreshToken", refreshToken, cookieOptionsSecure)
+        .json(new ApiResponse(
+            200,
+            {
+                accessToken,
+                refreshToken,
+            },
+            "User verified."
+        ))
+    }
+    catch(e)
+    {
+        throw new ApiError(
+            e.code || 401,
+            e.message || "Invalid token"
+        )
+    }
+})
+
 export {
     registerNewUser,
     loginUser,
     logoutUser,
-
+    regenerateAccessToken,
 }
