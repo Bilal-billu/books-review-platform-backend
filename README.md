@@ -1,0 +1,1 @@
+This project is a Node and Express server for a  web application that allows users to sign up, log in, and post reviews about books. An admin can also sign up, log in, and add new books to the database. The platform provides a user-friendly interface for book enthusiasts to share their opinions and discover new reads, while admins manage the growing book collection.
