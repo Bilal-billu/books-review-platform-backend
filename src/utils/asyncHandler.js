@@ -1,7 +1,7 @@
 const asyncHandler = (fn) => async (req, res, next) => {
     try
     {
-        console.log(req.body)
+        // console.log(req.body)
         await fn(req, res, next);
     }
     catch(e)

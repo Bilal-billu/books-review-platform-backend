@@ -8,6 +8,15 @@ dotenv.config({
 
 const port = process.env.PORT_NUMBER || 8000;
 
+const serverStartMessage = `
+ __________________________
+|      Server Started      |
+ --------------------------
+|        PORT: ${port}     |
+ ==========================
+ __________________________
+`
+
 connectDB().then(
     ()=>{
         app.listen(port)
@@ -17,12 +26,3 @@ connectDB().then(
     console.log("Error connecting server.\n\n")
     console.log(e)
 })
-
-const serverStartMessage = `
- __________________________
-|      Server Started      |
- --------------------------
-|        PORT: ${port}     |
- ==========================
- __________________________
-`

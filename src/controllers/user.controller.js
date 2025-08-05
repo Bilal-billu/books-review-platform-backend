@@ -8,8 +8,8 @@ const generateAccessAndRefreshToken = async (userId) => {
     try
     {
         const user = await User.findById(userId);
-        const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateRefreshToken();
+        const accessToken = await user.generateAccessToken();
+        const refreshToken = await user.generateRefreshToken();
         user.refreshToken = refreshToken;
         await user.save({
             validateBeforeSave: false,
@@ -81,7 +81,7 @@ const registerNewUser = asyncHandler(async (req, res) => {
 })
 
 const loginUser = asyncHandler(async (req, res) => {
-    console.log("login")
+    // console.log("login")
     const { email, password } = req.body;
     if([email, password].some(field => field.trim() === ""))
     {
@@ -100,6 +100,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Invalid credentials.")
     }
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
+    console.log(accessToken, refreshToken);
     let updatedUser = user.toObject();
     if(updatedUser.password)
     {
@@ -124,11 +125,41 @@ const loginUser = asyncHandler(async (req, res) => {
             "User logged in successfully."
         )
     )
-    
+})
 
+const logoutUser = asyncHandler(async (req, res) => {
+    const user = 
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $unset: {
+                refreshToken: 1
+            },
+        },
+        {
+            new: true,
+        },
+    )
+
+    console.log(user)
+
+
+    
+    return res.status(200)
+    .clearCookie("accessToken", cookieOptionsSecure)
+    .clearCookie("refreshToken", cookieOptionsSecure)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "User logged out successfully"
+        )
+    )
 })
 
 export {
     registerNewUser,
     loginUser,
+    logoutUser,
+
 }
