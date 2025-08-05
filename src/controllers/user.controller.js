@@ -83,7 +83,7 @@ const registerNewUser = asyncHandler(async (req, res) => {
 })
 
 const loginUser = asyncHandler(async (req, res) => {
-    // console.log("login")
+    console.log("login")
     const { email, password } = req.body;
     if([email, password].some(field => field.trim() === ""))
     {

@@ -23,7 +23,7 @@ export const verifyJWTToken = asyncHandler(async (req, _, next) => {
             })
         }
 
-        console.log("user", user)
+        // console.log("user", user)
 
         req.user = user;
         next();

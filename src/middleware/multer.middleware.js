@@ -9,8 +9,9 @@ const storage = multer.diskStorage(
         },
         filename: function(req, file, cb)
         {
-            const timestampName = new Date().toISOString().replace("T", "_").replace("Z", file.originalname)
-            cb(null, timestampName)
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const filename = `${timestamp}_${file.originalname}`;
+            cb(null, filename)
         }
     }
 )
