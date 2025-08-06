@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors"
 import cookieParser from "cookie-parser";
 
+import userRouter from "./routes/user.routes.js";
+import bookRouter from "./routes/book.routes.js";
+
 const app = express();
 
 app.use(cors({
@@ -24,7 +27,8 @@ app.use(cookieParser())
 
 const prefix = `/api`
 
-import userRouter from "./routes/user.routes.js";
+
 app.use(`${prefix}/user`, userRouter);
+app.use(`${prefix}/book`, bookRouter);
 
 export { app }
