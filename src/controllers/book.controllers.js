@@ -94,10 +94,66 @@ const addNewBook = asyncHandler(async (req, res) => {
     ))
 })
 
+const editBooks = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { title, author, genre } = req.body;
+    if(!id)
+    {
+        return new ApiError(400, 'No id found');
+    }
+    if (!title || !author || !genre) {
+        return new ApiError(400, 'Title, author, and genre are required.');
+    }
+    if (!author.length || !genre.length) {
+        return new ApiError(400, 'Author and genre cannot be empty arrays.' );
+    }
+
+    const filePath = req.file ? req.file.path : null;
+
+    const updateData = {
+        title,
+        author,
+        genre,
+    };
+    if (filePath) {
+        updateData.filePath = filePath;
+    }
+    
+    const updatedBook = await Book.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!updatedBook) {
+        return new ApiError(400, 'Book not found.');
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200, updatedBook, 'Book updated successfully'));
+})
+
+const getBookById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return new ApiError(400, 'Invalid book ID format');
+    }
+
+    const book = await Book.findById(id);
+
+    if (!book) {
+      return new ApiError(404, 'Book not found');
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(
+        200, book, "Book returned."
+    ))
+
+})
+
 
 
 export {
     getAllBooks,
     addNewBook,
+    editBooks,
+    getBookById,
 
 }

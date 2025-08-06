@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { verifyJWTToken } from "../middleware/userAuth.middleware.js";
 import { uploadOnMulter } from "../middleware/multer.middleware.js";
-import { addNewBook, getAllBooks } from "../controllers/book.controllers.js";
+import { addNewBook, editBooks, getAllBooks, getBookById } from "../controllers/book.controllers.js";
 
 
 const bookRouter = Router();
@@ -12,6 +12,8 @@ bookRouter.route('/add').post(
     addNewBook
 );
 bookRouter.route('/').get(getAllBooks)
+bookRouter.route('/:id').get(getBookById)
+bookRouter.route('/update/:id').patch(editBooks)
 
 
 export default bookRouter;
