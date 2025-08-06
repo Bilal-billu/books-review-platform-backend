@@ -210,9 +210,32 @@ const regenerateAccessToken = asyncHandler(async (req, res) => {
     }
 })
 
+
+const getMe = async (req, res) => {
+  try {
+    const incomingUser = req.user;
+    
+    const user = await User.findById(incomingUser.id).select('-password -refreshToken');
+
+    if (!user) {
+      return new ApiError(404, 'User not found');
+    }
+
+    // Return user data
+    return res.status(200)
+    .json(new ApiResponse(200, user, "User authenticated"))
+
+  } catch (err) {
+    console.error('Auth error:', err.message);
+    return new ApiError(401, 'Invalid or expired token');
+  }
+}
+
+
 export {
     registerNewUser,
     loginUser,
     logoutUser,
     regenerateAccessToken,
+    getMe,
 }
