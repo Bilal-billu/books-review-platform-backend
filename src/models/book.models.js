@@ -33,6 +33,10 @@ const bookSchema = new Schema(
         coverImageUrl: {
             type: String,
         },
+        description: {
+            type: String,
+            required: true,
+        },
         rating: {
             type: Number,
             required: true,

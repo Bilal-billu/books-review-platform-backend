@@ -42,11 +42,11 @@ const getAllBooks = asyncHandler(async (req, res) => {
 
 const addNewBook = asyncHandler(async (req, res) => {
 
-    const { title, author, genre } = req.body;
+    const { title, author, genre, description } = req.body;
     
     const filePath = req.file.path;
     const user = req.user;
-    if([title].some(field => field.trim() === ""))
+    if([title, description].some(field => field.trim() === ""))
     {
         throw new ApiError(400, "Required fields are missing");
     }
@@ -54,8 +54,8 @@ const addNewBook = asyncHandler(async (req, res) => {
     {
         throw new ApiError(400, "Required fields are missing");
     }
-    console.log("title, author, genre");
-    console.log(user);
+    // console.log("title, author, genre");
+    // console.log(user);
     if(!filePath)
     {
         throw new ApiError(500, "Failed to upload file");
@@ -76,6 +76,7 @@ const addNewBook = asyncHandler(async (req, res) => {
         title,
         author,
         genre,
+        description,
         coverImageUrl: filePath,
         rating: 0,
         addedBy: user._id,
@@ -96,13 +97,13 @@ const addNewBook = asyncHandler(async (req, res) => {
 
 const editBooks = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { title, author, genre } = req.body;
+    const { title, author, genre, description } = req.body;
     if(!id)
     {
         return new ApiError(400, 'No id found');
     }
-    if (!title || !author || !genre) {
-        return new ApiError(400, 'Title, author, and genre are required.');
+    if (!title || !author || !genre || !description) {
+        return new ApiError(400, 'Title, author, description and genre are required.');
     }
     if (!author.length || !genre.length) {
         return new ApiError(400, 'Author and genre cannot be empty arrays.' );
@@ -114,6 +115,7 @@ const editBooks = asyncHandler(async (req, res) => {
         title,
         author,
         genre,
+        description,
     };
     if (filePath) {
         updateData.filePath = filePath;
@@ -132,13 +134,13 @@ const editBooks = asyncHandler(async (req, res) => {
 const getBookById = asyncHandler(async (req, res) => {
     const { id } = req.params;
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-      return new ApiError(400, 'Invalid book ID format');
+      throw new ApiError(400, 'Invalid book ID format');
     }
 
     const book = await Book.findById(id);
 
     if (!book) {
-      return new ApiError(404, 'Book not found');
+      throw new ApiError(404, 'Book not found');
     }
 
     return res.status(200)
@@ -148,6 +150,36 @@ const getBookById = asyncHandler(async (req, res) => {
 
 })
 
+const deleteBookById = asyncHandler(async (req, res) => {
+    try
+    {
+        const { id } = req.params;
+        if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+            throw({
+                code: 400,
+                message: `Invalid book ID format`
+            })
+        //   return res.status(400).json({ message: 'Invalid book ID format' });
+        }
+        const deletedBook = await Book.findByIdAndDelete(id);
+
+        if (!deletedBook) {
+            throw({
+                code: 404,
+                message: `Book not found`
+            })
+        //   return res.status(404).json({ message: 'Book not found' });
+        }
+
+        return res.status(200).json(
+            new ApiResponse(200, deletedBook, "Book deleted successfully.")
+        );
+        }
+    catch(e)
+    {
+        throw new ApiError(e.code || 500, e.message || "Unknown error occurred.")
+    }
+})
 
 
 export {
@@ -155,5 +187,5 @@ export {
     addNewBook,
     editBooks,
     getBookById,
-
+    deleteBookById,
 }
