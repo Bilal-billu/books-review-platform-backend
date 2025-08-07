@@ -1,4 +1,5 @@
 import { Book } from "../models/book.models.js";
+import { Review } from "../models/review.models.js";
 import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -143,9 +144,14 @@ const getBookById = asyncHandler(async (req, res) => {
       throw new ApiError(404, 'Book not found');
     }
 
+    const reviews = await Review.find({ bookId: book._id }).populate("userId", "name email");
+
     return res.status(200)
     .json(new ApiResponse(
-        200, book, "Book returned."
+        200, {
+            book,
+            reviews,
+        }, "Book returned."
     ))
 
 })
