@@ -1,3 +1,4 @@
+import { Review } from "../models/review.models.js";
 import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -232,10 +233,196 @@ const getMe = async (req, res) => {
 }
 
 
+
+//=============================
+const getAllUsers = async (req, res) => {
+  try {
+    const isAdmin = req.user;
+    if(!isAdmin || isAdmin.role !== "Admin" )
+    {
+        return new ApiError(401, 'Unauthorized');
+    }
+    const users = await User.find().select('-password -refreshToken');
+
+    return res.status(200).json(new ApiResponse(200, users, 'All users retrieved successfully'));
+  } catch (err) {
+    console.error('Get all users error:', err.message);
+    return new ApiError(500, 'Failed to retrieve users');
+  }
+};
+
+const deleteUserById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = req.user;
+    if(!user || user.role !== "Admin")
+    {
+        return new ApiError(401, 'Unauthorized');
+    }
+
+    await Review.deleteMany({ userId: userId });
+
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return new ApiError(404, 'User not found');
+    }
+
+    return res.status(200).json(new ApiResponse(200, null, 'User deleted successfully'));
+  } catch (err) {
+    console.error('Delete user error:', err.message);
+    return new ApiError(500, 'Failed to delete user');
+  }
+};
+
+const getUserById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const isAdmin = req.user;
+
+    if(!isAdmin || isAdmin.role !== "Admin")
+    {
+        throw new ApiError(401, "Unauthorized");
+    }
+
+    const user = await User.findById(userId).select('-password -refreshToken');
+
+    if (!user) {
+      return new ApiError(404, 'User not found');
+    }
+
+    return res.status(200).json(new ApiResponse(200, user, 'User retrieved successfully'));
+  } catch (err) {
+    console.error('Get user by ID error:', err.message);
+    return new ApiError(500, 'Failed to retrieve user');
+  }
+};
+
+const getUserByEmail = async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return new ApiError(400, 'Email is required');
+    }
+
+    const user = await User.findOne({ email }).select('-password -refreshToken');
+
+    if (!user) {
+      return new ApiError(404, 'User not found');
+    }
+
+    return res.status(200).json(new ApiResponse(200, user, 'User retrieved successfully'));
+  } catch (err) {
+    console.error('Get user by email error:', err.message);
+    return new ApiError(500, 'Failed to retrieve user');
+  }
+};
+
+
+const changeUserRole = async (req, res) => {
+  try {
+    // const { id: userId } = req.params;
+    const { role, userId } = req.body;
+
+    if (!role) {
+      return new ApiError(400, 'New role is required');
+    }
+
+    const isAdmin = req.user;
+    if( !isAdmin || isAdmin.role !== "Admin")
+    {
+        throw new ApiError(401, "Unauthorized");
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return new ApiError(404, 'User not found');
+    }
+
+    user.role = role;
+    await user.save();
+
+    const responseData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    };
+
+    return res.status(200).json(new ApiResponse(200, responseData, 'User role updated successfully'));
+  } catch (err) {
+    console.error('Change user role error:', err.message);
+    return new ApiError(500, 'Failed to update user role');
+  }
+};
+
+const updateUserViaAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, role } = req.body;
+
+    const isAdmin = req.user;
+
+    if(!isAdmin || isAdmin.role !== "Admin")
+    {
+        throw new ApiError(401, "Unauthorized")
+    }
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return new ApiError(404, 'User not found');
+    }
+
+    // Update fields only if they are provided
+    if (name) user.name = name;
+    if (email)
+    {
+        const existingUser = await User.findOne({
+            email
+        })
+    
+        if(existingUser && existingUser._id.toString() !== id)
+        {
+            console.log("No")
+            throw new ApiError(400, "User already exists")
+        }
+        user.email = email.toLowerCase();
+    }
+    if (role) user.role = role;
+    if (password) user.password = password; // Assume pre-save hook hashes password
+
+
+
+    await user.save();
+
+    const responseData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    };
+
+    return res.status(200).json(new ApiResponse(200, responseData, 'User updated successfully'));
+  } catch (err) {
+    console.error('Update user error:', err.message);
+    return new ApiError(500, 'Failed to update user');
+  }
+};
+
+
+
 export {
     registerNewUser,
     loginUser,
     logoutUser,
     regenerateAccessToken,
     getMe,
+    getAllUsers,
+    deleteUserById,
+    getUserById,
+    getUserByEmail,
+    updateUserViaAdmin,
 }
