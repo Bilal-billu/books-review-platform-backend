@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 
 import userRouter from "./routes/user.routes.js";
 import bookRouter from "./routes/book.routes.js";
+import reviewRouter from "./routes/review.routes.js";
 
 const app = express();
 
@@ -30,5 +31,6 @@ const prefix = `/api`
 
 app.use(`${prefix}/user`, userRouter);
 app.use(`${prefix}/book`, bookRouter);
+app.use(`${prefix}/review`, reviewRouter);
 
 export { app }

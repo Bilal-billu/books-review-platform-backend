@@ -1,4 +1,5 @@
 import { Book } from "../models/book.models.js";
+import { Review } from "../models/review.models.js";
 import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -46,6 +47,7 @@ const addNewBook = asyncHandler(async (req, res) => {
     
     const filePath = req.file.path;
     const user = req.user;
+    console.log(title)
     if([title, description].some(field => field.trim() === ""))
     {
         throw new ApiError(400, "Required fields are missing");
@@ -102,11 +104,22 @@ const editBooks = asyncHandler(async (req, res) => {
     {
         return new ApiError(400, 'No id found');
     }
+
+    const user = req.user;
+    if(user.role !== "Admin")
+    {
+        throw new ApiError(401, "Unauthorized")
+    }
     if (!title || !author || !genre || !description) {
         return new ApiError(400, 'Title, author, description and genre are required.');
     }
     if (!author.length || !genre.length) {
         return new ApiError(400, 'Author and genre cannot be empty arrays.' );
+    }
+
+    const book = await Book.findById(id)
+    if (!book) {
+      throw new ApiError(404, 'Book not found');
     }
 
     const filePath = req.file ? req.file.path : null;
@@ -143,9 +156,14 @@ const getBookById = asyncHandler(async (req, res) => {
       throw new ApiError(404, 'Book not found');
     }
 
+    const reviews = await Review.find({ bookId: book._id }).populate("userId", "name email");
+
     return res.status(200)
     .json(new ApiResponse(
-        200, book, "Book returned."
+        200, {
+            book,
+            reviews,
+        }, "Book returned."
     ))
 
 })
