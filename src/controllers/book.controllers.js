@@ -179,6 +179,11 @@ const deleteBookById = asyncHandler(async (req, res) => {
             })
         //   return res.status(400).json({ message: 'Invalid book ID format' });
         }
+        const user = req.user;
+        if(user.role !== "Admin")
+        {
+            throw new ApiError(401, "Unauthorized")
+        } 
         const deletedBook = await Book.findByIdAndDelete(id);
 
         if (!deletedBook) {
