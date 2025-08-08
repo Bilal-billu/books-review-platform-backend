@@ -21,7 +21,11 @@ bookRouter.route('/add').post(
 );
 bookRouter.route('/').get(getAllBooks)
 bookRouter.route('/:id').get(getBookById)
-bookRouter.route('/update/:id').patch(editBooks)
+bookRouter.route('/update/:id').patch(
+    verifyJWTToken,
+    uploadOnMulter.single("coverImage"),
+    editBooks
+)
 
 bookRouter.route('/:id').delete(deleteBookById);
 
