@@ -21,7 +21,7 @@ const getAllBooks = asyncHandler(async (req, res) => {
     const calculatedPage = Math.max(parseInt(page), 1);
     const skipAhead = (calculatedPage - 1) * calculatedLimit;
 
-    console.log("query", q);
+    // console.log("query", q);
 
     let allBooks;
     if(q?.trim() === "")
@@ -231,6 +231,65 @@ const deleteBookById = asyncHandler(async (req, res) => {
     }
 })
 
+const getBooksByGenreOrAuthor = asyncHandler(async (req, res) => {
+    let { limit, page, author, genre } = req.query;
+    // console.log("idr tou aya")
+    if(!(Number(limit)))
+    {
+        limit = 0;
+    }
+    if(!(Number(page)))
+    {
+        page = 0;
+    }
+    const calculatedLimit = Math.max(parseInt(limit), 30);
+    const calculatedPage = Math.max(parseInt(page), 1);
+    const skipAhead = (calculatedPage - 1) * calculatedLimit;
+
+    // console.log("query", author, genre);
+
+    let allBooks;
+    if(author?.trim() === "" && genre?.trim() === "")
+    {
+        allBooks = await Book.find({}).skip(skipAhead).limit(calculatedLimit);
+    }
+    else if(author && author?.trim() !== "")
+    {
+        // console.log("author wala", author)
+        allBooks = await Book.find({
+            author: {$in: [author]}
+        })
+        .skip(skipAhead)
+        .limit(calculatedLimit)
+    }
+    else if (genre && genre?.trim() !== "")
+    {
+        // console.log("genre wala", genre)
+        allBooks = await Book.find({
+            genre: {$in: [genre]}
+        })
+        .skip(skipAhead)
+        .limit(calculatedLimit)
+    }
+    
+    if(!allBooks)
+    {
+        throw new ApiError(404, "Error getting books");
+    }
+    return res.status(200)
+    .json(new ApiResponse(
+        200,
+        {
+            books: allBooks,
+            meta: {
+                page: calculatedPage,
+                limit: calculatedLimit,
+            },
+        },
+        "All books returned successfully"
+    ))
+})
+
 
 export {
     getAllBooks,
@@ -238,4 +297,5 @@ export {
     editBooks,
     getBookById,
     deleteBookById,
+    getBooksByGenreOrAuthor,
 }
