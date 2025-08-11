@@ -156,13 +156,24 @@ const getBookById = asyncHandler(async (req, res) => {
       throw new ApiError(404, 'Book not found');
     }
 
-    const reviews = await Review.find({ bookId: book._id }).populate("userId", "name email");
+    const reviews = await Review.find({ bookId: book._id })
+    .populate({ path: "userId", select: "name email" })
+    .lean();
+
+    const safeReviews = reviews.map(review => {
+      // If user is missing, replace null with empty object
+      review.userId = review.userId || {};
+      return review;
+    });
+
+    // res.json(safeReviews);
+
 
     return res.status(200)
     .json(new ApiResponse(
         200, {
             book,
-            reviews,
+            reviews: safeReviews,
         }, "Book returned."
     ))
 
