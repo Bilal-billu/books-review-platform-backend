@@ -8,7 +8,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 
 
 const getAllBooks = asyncHandler(async (req, res) => {
-    let { limit, page } = req.query;
+    let { limit, page, q } = req.query;
     if(!(Number(limit)))
     {
         limit = 0;
@@ -21,8 +21,24 @@ const getAllBooks = asyncHandler(async (req, res) => {
     const calculatedPage = Math.max(parseInt(page), 1);
     const skipAhead = (calculatedPage - 1) * calculatedLimit;
 
+    console.log("query", q);
 
-    const allBooks = await Book.find({}).skip(skipAhead).limit(calculatedLimit);
+    let allBooks;
+    if(q?.trim() === "")
+    {
+        allBooks = await Book.find({}).skip(skipAhead).limit(calculatedLimit);
+    }
+    else
+    {
+        const regex = new RegExp(q, 'i');
+        allBooks = await Book.find({
+            $or: [
+                { title: { $regex: regex } },
+                { author: { $elemMatch: { $regex: regex } } },
+                { genre: { $elemMatch: { $regex: regex } } },
+            ]
+        }).skip(skipAhead).limit(calculatedLimit);
+    }
     if(!allBooks)
     {
         throw new ApiError(404, "Error getting books");
