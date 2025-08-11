@@ -27,6 +27,9 @@ bookRouter.route('/update/:id').patch(
     editBooks
 )
 
-bookRouter.route('/:id').delete(deleteBookById);
+bookRouter.route('/:id').delete(
+    verifyJWTToken,
+    deleteBookById
+);
 
 export default bookRouter;

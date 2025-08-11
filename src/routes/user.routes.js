@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getMe, loginUser, logoutUser, regenerateAccessToken, registerNewUser } from "../controllers/user.controller.js";
+import { deleteUserById, getAllUsers, getMe, getUserByEmail, getUserById, loginUser, logoutUser, regenerateAccessToken, registerNewUser, updateUserViaAdmin } from "../controllers/user.controller.js";
 import { verifyJWTToken } from "../middleware/userAuth.middleware.js";
 
 const userRouter = Router();
@@ -16,6 +16,28 @@ userRouter.route('/auth/me').get(
     verifyJWTToken,
     getMe
 );
+
+
+userRouter.route('/:id').get(
+    getUserById
+)
+
+userRouter.route('/email').get(
+    getUserByEmail
+)
+///////
+userRouter.route('/').get(
+    verifyJWTToken,
+    getAllUsers
+)
+userRouter.route('/:id').delete(
+    verifyJWTToken,
+    deleteUserById
+)
+userRouter.route('/update-via-admin/:id').patch(
+    verifyJWTToken,
+    updateUserViaAdmin,
+)
 
 
 export default userRouter
