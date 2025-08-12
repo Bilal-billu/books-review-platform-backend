@@ -7,6 +7,7 @@ import {
     getAllBooks,
     getBookById,
     deleteBookById,
+    getBooksByGenreOrAuthor,
 
 
 } from "../controllers/book.controllers.js";
@@ -20,6 +21,11 @@ bookRouter.route('/add').post(
     addNewBook
 );
 bookRouter.route('/').get(getAllBooks)
+
+bookRouter.route('/search-book').get(
+    getBooksByGenreOrAuthor
+)
+
 bookRouter.route('/:id').get(getBookById)
 bookRouter.route('/update/:id').patch(
     verifyJWTToken,
@@ -31,5 +37,8 @@ bookRouter.route('/:id').delete(
     verifyJWTToken,
     deleteBookById
 );
+
+
+
 
 export default bookRouter;

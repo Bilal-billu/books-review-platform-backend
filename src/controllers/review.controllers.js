@@ -5,6 +5,31 @@ import { Review } from "../models/review.models.js"
 import { Book } from "../models/book.models.js";
 
 
+const calculateBookRating = async (bookId) => {
+    try
+    {
+        const book = await Book.findById(bookId);
+        if(!book)
+        {
+            throw({
+                code: 404,
+                message: "Could not find book to update review."
+            })
+        }
+        const allReviews = await Review.find({ bookId });
+        const totalStars = allReviews?.reduce((acc, r) => acc + r.starsCount, 0) ;
+        const averageRating = totalStars / allReviews?.length;
+        book.rating = averageRating;
+        await book.save();
+        return allReviews
+    }
+    catch(e)
+    {
+        console.log(e)
+        throw new ApiError(e.code || 500, e.message || "Could not update book reviews")
+    }
+}
+
 const postNewReview = asyncHandler(async (req, res) => {
     const { text, starsCount, bookId } = req.body;
     const user = req.user;
@@ -42,14 +67,16 @@ const postNewReview = asyncHandler(async (req, res) => {
 
     // const createdReview = await review.save();
 
-    console.log("Here")
+    console.log("Here");
 
-    const allReviews = await Review.find({ bookId });
-    const totalStars = allReviews?.reduce((acc, r) => acc + r.starsCount, 0) ;
-    const averageRating = totalStars / allReviews?.length;
-    book.rating = averageRating;
-    await book.save();
-    console.log(book)
+    const updatedBook = await calculateBookRating(bookId);
+
+    // const allReviews = await Review.find({ bookId });
+    // const totalStars = allReviews?.reduce((acc, r) => acc + r.starsCount, 0) ;
+    // const averageRating = totalStars / allReviews?.length;
+    // book.rating = averageRating;
+    // await book.save();
+    console.log(updatedBook);
 
 
     res.status(201).json(new ApiResponse(201, review,
@@ -76,8 +103,42 @@ const getReviewsByBookId = asyncHandler(async (req, res) => {
     ));
 });
 
+const updateReview = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { text, starsCount } = req.body;
+    const user = req.user;
+    const review = await Review.findById(id);
+    if(!review)
+    {
+        throw new ApiError(404, "Review not found");
+    }
+
+    console.log("user", user);
+
+    console.log("review", review)
+
+    if(!user._id.equals(review.userId))
+    {
+        throw new ApiError(401, "You can only edit your own reviews.");
+    }
+    review.text = text;
+    review.starsCount = starsCount;
+    await review.save();
+
+    const updatedBook = await calculateBookRating(review.bookId);
+    console.log(updatedBook);
+
+    return res.status(200)
+    .json(new ApiResponse(
+        201,
+        review,
+        "Review updated successfully."
+    ))
+})
+
 
 export {
     postNewReview,
     getReviewsByBookId,
+    updateReview
 };
